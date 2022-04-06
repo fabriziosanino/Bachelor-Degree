@@ -98,6 +98,8 @@ def inspectProduct(item, keyList, pos):
 
     productPrice = amazonModule.getProductPrice(item)
 
+    productReviewRating = amazonModule.getProductReviewRating(item)
+
     print(productName.get_attribute("innerHTML"))
 
     # Controlla che siano presenti nel nome tutte le parole chiave inserite dall'utente
@@ -119,6 +121,7 @@ def inspectProduct(item, keyList, pos):
                 "productLink": linkProduct.get_attribute("href"),
                 "productImage": imageProduct.get_attribute("src"),
                 "productPrice": productPrice,
+                "ratingReview": productReviewRating,
                 "reliability": 100}
     # elif len(keyList) == previousLengthOfKeyList:
     # E' molto difficile che sia un prodotto target perchè nel nome non c'è nemmeno una key
@@ -136,6 +139,7 @@ def inspectProduct(item, keyList, pos):
                     "productLink": linkProduct.get_attribute("href"),
                     "productImage": imageProduct.get_attribute("src"),
                     "productPrice": productPrice,
+                    "ratingReview": productReviewRating,
                     "reliability": 100}
         else:
             # Ultima prova cercando le parole rimananeti senza che esse siano collegate ma basta che siano presenti nel testo
@@ -171,6 +175,7 @@ def inspectProduct(item, keyList, pos):
                         "productLink": linkProduct.get_attribute("href"),
                         "productImage": imageProduct.get_attribute("src"),
                         "productPrice": productPrice,
+                        "ratingReview": productReviewRating,
                         "reliability": reliability}
             else:
                 return {}

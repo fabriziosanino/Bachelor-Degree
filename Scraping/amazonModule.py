@@ -131,6 +131,31 @@ def getLinkProduct(item):
     return linkProduct
 
 
+"""Ottiene il rating del prodotto definito da Amazon
+
+Parametri
+----------
+item: prodotto
+    Prodotto in cui cercare il rating
+
+Returns
+-------
+string
+    Rating del prosotto
+"""
+def getProductReviewRating(item):
+    try:
+        rating = item.find_element(By.XPATH,
+                                        './/span[@class="a-icon-alt"]').get_attribute("innerHTML")
+
+        rating = rating.split(' out')[0]
+    except:
+        #Alcuni prodotti non hanno alcuna recensione
+        rating = 0
+
+    return rating
+
+
 """Ottiene il link all'immagine del prodotto
 
 Parametri
