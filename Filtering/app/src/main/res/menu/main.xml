@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+    <group >
+        <item
+            android:id="@+id/iRel"
+            android:title="Increasing Reliability" />
+        <item
+            android:id="@+id/dRel"
+            android:checked="true"
+            android:title="Decreasing Reliability" />
+    </group>
+    <group >
+        <item
+            android:id="@+id/iPri"
+            android:title="Increasing Price" />
+        <item
+            android:id="@+id/dPri"
+            android:title="Decreasing Price" />
+    </group>
+</menu>
