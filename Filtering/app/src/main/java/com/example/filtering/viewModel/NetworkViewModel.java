@@ -220,6 +220,21 @@ public class NetworkViewModel extends AndroidViewModel {
         }
     }
 
+    public void setIncreasingReviewRating() {
+        if(!checkDownloading()) {
+            searchResults.getArrayList().sort(Comparator.comparingDouble(SearchResult::getRatingReview));
+            adapterSearch.setData(searchResults.getArrayList());
+        }
+    }
+
+    public void setDecreasingReviewRating() {
+        if(!checkDownloading()) {
+            searchResults.getArrayList().sort(Comparator.comparingDouble(SearchResult::getRatingReview));
+            Collections.reverse(searchResults.getArrayList());
+            adapterSearch.setData(searchResults.getArrayList());
+        }
+    }
+
     public void classifyProduct(JSONObject param) {
         new classifyProduct().execute(param);
     }
@@ -274,7 +289,7 @@ public class NetworkViewModel extends AndroidViewModel {
                     /* C'è L'INTESTAZIONE CHE CI INDICA SE C'è UN ERRORE*/
                     for (int i = 1; i < result.length(); i++) {
                         JSONObject item = result.getJSONObject(i);
-                        SearchResult s = new SearchResult(item.getString("productName"), item.getString("productLink"), item.getString("productImg"), item.getString("price"), item.getInt("reliability"), false);
+                        SearchResult s = new SearchResult(item.getString("productName"), item.getString("productLink"), item.getString("productImg"), item.getString("price"), item.getInt("reliability"), false, Float.parseFloat(item.getString("ratingReview")));
                         searchResults.addElement(s);
                     }
 
@@ -400,7 +415,7 @@ public class NetworkViewModel extends AndroidViewModel {
                                 productPrice = productPrice.replaceAll(",", "");
                             }
 
-                            SearchResult s = new SearchResult(item.getString("name"), item.getString("productLink"), item.getString("productImage"), productPrice , item.getInt("reliability"), true);
+                             SearchResult s = new SearchResult(item.getString("name"), item.getString("productLink"), item.getString("productImage"), productPrice , item.getInt("reliability"), true, Float.parseFloat(item.getString("ratingReview")));
                             searchResults.addElement(s);
                         }
 

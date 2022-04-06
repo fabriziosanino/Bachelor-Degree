@@ -18,4 +18,12 @@
             android:id="@+id/dPri"
             android:title="Decreasing Price" />
     </group>
+    <group >
+        <item
+            android:id="@+id/iRat"
+            android:title="Increasing Rating Review" />
+        <item
+            android:id="@+id/dRat"
+            android:title="Decrease Rating Review" />
+    </group>
 </menu>

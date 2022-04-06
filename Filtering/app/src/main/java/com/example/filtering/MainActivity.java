@@ -83,6 +83,12 @@ public class MainActivity extends AppCompatActivity {
             case R.id.dRel:
                 model.setDecreasingReliability();
                 return true;
+            case R.id.iRat:
+                model.setIncreasingReviewRating();
+                return true;
+            case R.id.dRat:
+                model.setDecreasingReviewRating();
+                return true;
             default:
                 return super.onOptionsItemSelected(item);
         }

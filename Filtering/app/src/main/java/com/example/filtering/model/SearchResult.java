@@ -7,14 +7,16 @@ public class SearchResult {
     private int reliability;
     private String price;
     private boolean newResult;
+    private float ratingReview;
 
-    public SearchResult(String productName, String productLink, String productImg, String price, int reliability, boolean newResult) {
+    public SearchResult(String productName, String productLink, String productImg, String price, int reliability, boolean newResult, float ratingReview) {
         this.productName = productName;
         this.productLink = productLink;
         this.productImg = productImg;
         this.reliability = reliability;
         this.price = price;
         this.newResult = newResult;
+        this.ratingReview = ratingReview;
     }
 
     public String getProductName() {
@@ -63,5 +65,13 @@ public class SearchResult {
 
     public void setNewResult(boolean newResult) {
         this.newResult = newResult;
+    }
+
+    public float getRatingReview() {
+        return ratingReview;
+    }
+
+    public void setRatingReview(float ratingReview) {
+        this.ratingReview = ratingReview;
     }
 }
