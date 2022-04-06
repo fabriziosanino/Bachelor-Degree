@@ -63,7 +63,7 @@ public class SearchItemsCustomViewAdapter extends RecyclerView.Adapter<SearchIte
             });
 
             if(item.getPrice().equals("0"))
-                holder.txtPrice.setText("NO PRICE FOUND");
+                holder.txtPrice.setText("NO PRICE");
             else
                 holder.txtPrice.setText("$" + item.getPrice());
 
