@@ -6,6 +6,9 @@ import nltk
 import pickle
 import time
 import re, string
+import amazonModule
+
+AmazonModule = amazonModule.AmazonModule()
 
 #Crea i tag ed elimina le parole con il tag che non sono necessarie
 def remove_noise(tokens, stop_words = ()):
@@ -37,26 +40,29 @@ def classify(link, mainDriver):
 
     mainDriver.implicitly_wait(1)
 
-    #Mostro tutte le recensioni
-    try:
+    # Mostro tutte le recensioni
+    """try:
         buttonSeeAll = mainDriver.find_element(By.XPATH, '//a[@data-hook="see-all-reviews-link-foot"]')
         buttonSeeAll.click()
-
-        #time.sleep(1)
     except:
         return [{
             "error": True,
             "errorDescription": "Nessuna recensione trovata"
-        }]
+        }]"""
+    find = AmazonModule.showAllReview(mainDriver)
+    if find is not None:
+        return find
 
     #Ordino le recensione in base a quelle più recenti
-    select = wait(mainDriver, 20).until(
+    """select = wait(mainDriver, 20).until(
         EC.element_to_be_clickable((By.XPATH, '//select[@id="sort-order-dropdown"]/option[@value="recent"]')))
 
-    select.click()
+    select.click()"""
+    AmazonModule.orderReview(mainDriver)
 
     #Leggo il contenuto del div principale in modo da velocizzare le operazioni di ricerca
-    page = wait(mainDriver, 30).until(EC.visibility_of_element_located((By.XPATH, '//div[@class="a-fixed-right-grid view-point"]')))
+    #page = wait(mainDriver, 30).until(EC.visibility_of_element_located((By.XPATH, '//div[@class="a-fixed-right-grid view-point"]')))
+    page = AmazonModule.readMainContainer(mainDriver)
 
     time.sleep(5)
 
@@ -65,11 +71,12 @@ def classify(link, mainDriver):
     #Il ciclo si ferma quando sono finite le recensioni (ovvero non viene trovato il bottone) oppure quando trovo 50 recensioni
     while len(reviewsText) < 50:
         #Leggo le recensioni
-        reviews = page.find_elements(By.XPATH, './/div[@data-hook="review"]')
+        #reviews = page.find_elements(By.XPATH, './/div[@data-hook="review"]')
+        reviews = AmazonModule.readReviews(page)
 
         for review in reviews:
             #Estraggo il testo di ciascuna recensione
-            try:
+            """try:
                 text = review.find_element(By.XPATH, './/a[@data-hook="review-title"]/span').get_attribute(
                     "innerHTML")
             except:
@@ -81,21 +88,26 @@ def classify(link, mainDriver):
                     "innerHTML")
             except:
                 #Puo non esserci un body della recensione
-                None
+                None"""
+            text = AmazonModule.getReviewText(review)
 
             reviewsText.append(text)
 
         #Scelgo la pagina successiva
-        try:
+        """try:
             buttonNext = wait(page, 20).until(EC.element_to_be_clickable((By.XPATH, '//li[@class="a-last"]/a')))
 
             buttonNext.click()
         except:
             #NON CI SONO PIU PAGINE DA ANALIZZARE
+            break"""
+        find = AmazonModule.getNextReviewPage(page)
+        if not find:
             break
 
-        page = wait(mainDriver, 30).until(
-            EC.visibility_of_element_located((By.XPATH, '//div[@class="a-fixed-right-grid view-point"]')))
+        """page = wait(mainDriver, 30).until(
+            EC.visibility_of_element_located((By.XPATH, '//div[@class="a-fixed-right-grid view-point"]')))"""
+        page = AmazonModule.readMainContainer(mainDriver)
 
         time.sleep(5)
 

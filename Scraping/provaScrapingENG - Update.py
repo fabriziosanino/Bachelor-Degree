@@ -27,6 +27,8 @@ app = Flask(__name__)
 mainDriver = None
 drivers = []
 
+AmazonModule = amazonModule.AmazonModule()
+
 s = 'C:/Users/fabri/Desktop/Fabry/3 Uni/2 Semestre/Stage/Scraping/chromedriver.exe'
 options = webdriver.ChromeOptions()
 options.add_argument('--headless')
@@ -94,53 +96,60 @@ def inspectProduct(item, keyList, pos):
     for element in keyList:
         totalLetter += len(element)
 
-    productName = amazonModule.getProductName(item)
+    productName = AmazonModule.getProductName(item)
+    #Sostituisco i backslash con lo slash
+    productName = productName.get_attribute("innerHTML").replace("'", "^")
+    productName = productName.replace('"', "")
 
-    productPrice = amazonModule.getProductPrice(item)
+    productPrice = AmazonModule.getProductPrice(item)
 
-    productReviewRating = amazonModule.getProductReviewRating(item)
+    productReviewRating = AmazonModule.getProductReviewRating(item)
 
-    print(productName.get_attribute("innerHTML"))
+    print(productName)
 
     # Controlla che siano presenti nel nome tutte le parole chiave inserite dall'utente
 
     previousLengthOfKeyList = len(keyList)
 
-    textToSearch = productName.get_attribute("innerHTML").lower()
+    textToSearch = productName.lower()
 
     keyList = findInProduct(keyList, textToSearch)
 
-    linkProduct = amazonModule.getLinkProduct(item)
+    linkProduct = AmazonModule.getLinkProduct(item)
 
-    imageProduct = amazonModule.getLinkProductImg(item)
+    imageProduct = AmazonModule.getLinkProductImg(item)
 
     if len(keyList) == 0:
         # Sono state trovate tutte le caratteristiche
 
-        return {"name": productName.get_attribute("innerHTML").lower(),
+        return {
+            "name": productName.lower(),
                 "productLink": linkProduct.get_attribute("href"),
                 "productImage": imageProduct.get_attribute("src"),
                 "productPrice": productPrice,
                 "ratingReview": productReviewRating,
-                "reliability": 100}
+                "reliability": 100
+        }
     # elif len(keyList) == previousLengthOfKeyList:
     # E' molto difficile che sia un prodotto target perchè nel nome non c'è nemmeno una key
     # return {}
     else:
         # Utilizzo l'instanza di google chrome per cercare il prodotto
 
-        textToSearch = amazonModule.getProductDetails(drivers[pos], linkProduct, textToSearch)
+        textToSearch = AmazonModule.getProductDetails(drivers[pos], linkProduct, textToSearch)
         keyListName = findInProduct(keyList, textToSearch)
 
         if len(keyListName) == 0:
             imageProduct = item.find_element(By.XPATH, './/img[@class="s-image"]')
 
-            return {"name": productName.get_attribute("innerHTML").lower(),
+            return {
+                "name": productName.lower(),
                     "productLink": linkProduct.get_attribute("href"),
                     "productImage": imageProduct.get_attribute("src"),
                     "productPrice": productPrice,
                     "ratingReview": productReviewRating,
-                    "reliability": 100}
+                    "reliability": 100
+            }
         else:
             # Ultima prova cercando le parole rimananeti senza che esse siano collegate ma basta che siano presenti nel testo
             findAll = True
@@ -171,12 +180,14 @@ def inspectProduct(item, keyList, pos):
                 if reliability <= 0:
                     reliability = 5
 
-                return {"name": productName.get_attribute("innerHTML").lower(),
+                return {
+                    "name": productName.lower(),
                         "productLink": linkProduct.get_attribute("href"),
                         "productImage": imageProduct.get_attribute("src"),
                         "productPrice": productPrice,
                         "ratingReview": productReviewRating,
-                        "reliability": reliability}
+                        "reliability": reliability
+                }
             else:
                 return {}
 
@@ -203,8 +214,6 @@ def deleteResearch():
                     #Elimino tutti i prodotti della ricerca
                     cursor.execute("DELETE FROM savedproducts WHERE researchNum = " + str(idResearch))
 
-                    connection.commit()
-
                     #Elimino la ricerca
                     cursor.execute("DELETE FROM search WHERE id = " + str(idResearch))
 
@@ -213,9 +222,12 @@ def deleteResearch():
                     connection.close()
 
                     return jsonify([{
-                        "error":False
+                        "error": False,
+                        "researchId": idResearch
                     }])
                 except:
+                    connection.rollback()
+
                     if connection.is_connected():
                         cursor.close()
                         connection.close()
@@ -265,7 +277,8 @@ def getResearchDetail():
                             "productLink": row[2],
                             "productImg": row[3],
                             "reliability": row[4],
-                            "price": row[5]
+                            "price": row[5],
+                            "ratingReview": row[7]
                         })
 
                     connection.close()
@@ -360,7 +373,14 @@ def saveResearch():
     if content_type != 'application/json;charset=UTF-8':
         return {"error": "Content-Type not supported!"}, 422
     else:
-        clientParameter = json.loads(request.get_data(), strict=False)
+        try:
+            clientParameter = json.loads(request.get_data(), strict=False)
+        except:
+            string = request.get_data().decode('unicode_escape')
+            clientParameter = json.loads(string, strict=False)
+
+            print("EXCEPT")
+
         products = clientParameter["products"]
         nameResearch = clientParameter["nameResearch"]
 
@@ -374,24 +394,26 @@ def saveResearch():
                     #Inserisco la ricerca
                     cursor.execute("INSERT INTO search VALUES(NULL, '" + nameResearch + "', " + str(len(products)) + ")")
 
-                    connection.commit()
+                    #connection.commit()
 
                     idResearchInserted = cursor.lastrowid
 
                     try:
                         #Inserisco tutti i prodotti con il riferimento alla ricerca
                         for product in products:
-                            query = "INSERT INTO savedproducts VALUES(NULL, '" + str(product["productName"]) + "', '" + str(product["productLink"]) + "', '" + str(product["productImg"]) + "', '" + str(product["reliability"]) + "', '" + str(product["price"]) + "', " + str(idResearchInserted) + ")"
+                            query = "INSERT INTO savedproducts VALUES(NULL, '" + str(product["productName"]) + "', '" + str(product["productLink"]) + "', '" + str(product["productImg"]) + "', '" + str(product["reliability"]) + "', '" + str(product["price"]) + "', " + str(idResearchInserted) + ", '" + str(product["ratingReview"]) + "')"
                             cursor.execute(query)
 
-                            connection.commit()
-
+                        connection.commit()
                         connection.close()
 
                         return jsonify([{
-                            "error": False
+                            "error": False,
+                            "errorDescription": ""
                         }])
                     except:
+                        connection.rollback()
+
                         if connection.is_connected():
                             cursor.close()
                             connection.close()
@@ -464,7 +486,7 @@ def getProducts():
 
         #Se findMore è true, ho già i prodotti
         if firstRequest:
-            amazonModule.navigateToProducts(mainDriver, keywordProductName.replace(',', ' '))
+            AmazonModule.navigateToProducts(mainDriver, keywordProductName.replace(',', ' '))
         elif findMore:
             linkNextPage = clientParameter["linkNextPage"]
             mainDriver.get(linkNextPage)
@@ -478,7 +500,7 @@ def getProducts():
 
 
         # Ottengo tutti i prodotti in base alla classe che hanno nell'html
-        items = amazonModule.getProducts(mainDriver)
+        items = AmazonModule.getProducts(mainDriver)
 
         startItemsNumber = len(items)
 
@@ -554,7 +576,7 @@ def getProducts():
                 #Non ci sono più elementi da analizzare
                 resultItems[0]["itemsNum"] = len(items)
 
-                linkNextPage = amazonModule.getLinkNextPage(mainDriver)
+                linkNextPage = AmazonModule.getLinkNextPage(mainDriver)
                 resultItems[0]["linkNextPage"] = linkNextPage
         else:
             if firstRequest:
