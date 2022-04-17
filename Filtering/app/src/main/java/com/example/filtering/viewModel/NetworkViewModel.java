@@ -34,7 +34,7 @@ import java.util.Comparator;
 
 public class NetworkViewModel extends AndroidViewModel {
 
-    private final ProductsLiveData productsLiveData;
+    private final SearchedProduductsLiveData searchedProduductsLiveData;
     private final ClassifyLiveData classifyLiveData;
     private final SaveResearchLiveData saveResearchLiveData;
     private final ReadResearchLiveData readResearchLiveData;
@@ -52,7 +52,7 @@ public class NetworkViewModel extends AndroidViewModel {
     public NetworkViewModel(@NonNull Application application) {
         super(application);
 
-        productsLiveData = new ProductsLiveData();
+        searchedProduductsLiveData = new SearchedProduductsLiveData();
         classifyLiveData = new ClassifyLiveData();
         saveResearchLiveData = new SaveResearchLiveData();
         readResearchLiveData = new ReadResearchLiveData();
@@ -62,8 +62,8 @@ public class NetworkViewModel extends AndroidViewModel {
         savedResults = new SavedResults();
     }
 
-    public ProductsLiveData getProductsLiveData() {
-        return productsLiveData;
+    public SearchedProduductsLiveData getSearchedProductsLiveData() {
+        return searchedProduductsLiveData;
     }
 
     public ClassifyLiveData getClassifyLiveData() {
@@ -119,6 +119,7 @@ public class NetworkViewModel extends AndroidViewModel {
     }
 
     private JSONArray sentPOSTRequest(String urlServer, JSONObject param) {
+        String retVal = "";
         try {
             URL url = new URL(urlServer);
             HttpURLConnection conn = (HttpURLConnection) url.openConnection();
@@ -140,12 +141,21 @@ public class NetworkViewModel extends AndroidViewModel {
                 Log.e("Errore", "Il server non ha risposto in modo corretto!!!");
                 return new JSONArray();
             } else {
-                String retVal = readIt(conn.getInputStream());
+                retVal = readIt(conn.getInputStream());
                 return new JSONArray(retVal);
             }
         } catch (IOException | JSONException e) {
             e.printStackTrace();
-            return new JSONArray();
+            retVal += "]";
+            try {
+                return new JSONArray(retVal);
+            } catch (JSONException jsonException) {
+                jsonException.printStackTrace();
+
+                Log.d("ERRORE", retVal + "\nQui c'è l'errore");
+
+                return new JSONArray();
+            }
         }
     }
 
@@ -235,12 +245,78 @@ public class NetworkViewModel extends AndroidViewModel {
         }
     }
 
+    public JSONObject setCurrentProducts() {
+        JSONObject retVal = new JSONObject();
+
+        try {
+            if (searchResults.getArrayList().size() > 0) {
+                adapterSearch.setData(searchResults.getArrayList());
+
+                retVal.put("error", false);
+
+                retVal.put("saved", searchResults.getSavedSearch());
+            } else {
+                retVal.put("error", true);
+            }
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+
+        return retVal;
+    }
+
     public void classifyProduct(JSONObject param) {
         new classifyProduct().execute(param);
     }
 
-    public void saveResearch(JSONObject param) {
-        new saveResearch().execute(param);
+    public void saveResearch() {
+        if (searchResults.getArrayList().size() != 0) {
+            JSONObject research = new JSONObject();
+            try {
+                research.put("nameResearch", productName);
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+
+            JSONArray jsonArray = new JSONArray();
+
+            for (SearchResult s : searchResults.getArrayList()) {
+                JSONObject jsonObject = new JSONObject();
+                try {
+                    jsonObject.put("productName", s.getProductName());
+                    jsonObject.put("productLink", s.getProductLink());
+                    jsonObject.put("productImg", s.getProductImg());
+                    jsonObject.put("reliability", s.getReliability());
+                    jsonObject.put("price", s.getPrice());
+                    jsonObject.put("ratingReview", s.getRatingReview());
+
+                    jsonArray.put(jsonObject);
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+            }
+
+            try {
+                research.put("products", jsonArray);
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+
+            new saveResearch().execute(research);
+        } else {
+            JSONArray retVal = new JSONArray();
+            JSONObject internal = new JSONObject();
+            try {
+                internal.put("error", true);
+                internal.put("errorDescription", "Impossible to save. No products found!");
+
+                retVal.put(internal);
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+
+            saveResearchLiveData.updateSaveResearch(retVal);
+        }
     }
 
     public void readResearches() {
@@ -248,6 +324,8 @@ public class NetworkViewModel extends AndroidViewModel {
     }
 
     public void findResearchDetails(JSONObject param) {
+        /*setProgressDialogMessage("Search download in progress. Wait for...");
+        getProgressDialog().show();*/
         new findResearchDetails().execute(param);
     }
 
@@ -263,6 +341,18 @@ public class NetworkViewModel extends AndroidViewModel {
 
         @Override
         protected void onPostExecute(JSONArray jsonObject) {
+            for(SavedResult s: savedResults.getArrayList()) {
+                try {
+                    if(s.getId() == jsonObject.getJSONObject(0).getInt("researchId")) {
+                        savedResults.getArrayList().remove(s);
+                        adapterSaved.setData(savedResults.getArrayList());
+                        break;
+                    }
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+            }
+
             deleteResearchLiveData.updateDeleteResearch(jsonObject);
         }
     }
@@ -297,10 +387,14 @@ public class NetworkViewModel extends AndroidViewModel {
                     Collections.reverse(searchResults.getArrayList());
                     adapterSearch.setData(searchResults.getArrayList());
 
+                    searchResults.setSavedSearch(true);
+
                     retValue.put("error", false);
 
                     researchDetailsLiveData.updateResearchDetails(retValue);
                 }
+
+                //getProgressDialog().dismiss();
             } catch (JSONException e) {
                 e.printStackTrace();
             }
@@ -342,12 +436,14 @@ public class NetworkViewModel extends AndroidViewModel {
                         adapterSaved.setData(savedResults.getArrayList());
 
                         retVal.put("error", false);
+
+                        readResearchLiveData.updateReadResearch(retVal);
                     } else {
                         retVal.put("error", true);
                         retVal.put("errorDescription", "No searches saved!");
-                    }
 
-                    readResearchLiveData.updateReadResearch(retVal);
+                        readResearchLiveData.updateReadResearch(retVal);
+                    }
                 }
             } catch (JSONException e) {
                 e.printStackTrace();
@@ -398,7 +494,8 @@ public class NetworkViewModel extends AndroidViewModel {
                         // LA RICERCA NON HA PRODOTTO ALCUN RISULTATO
                         retValue.put("error", true);
                         retValue.put("errorDescription", "Unfortunately we were unable to fulfill your request ...");
-                        productsLiveData.updateProducts(retValue);
+                        Log.d("result", String.valueOf(result));
+                        searchedProduductsLiveData.updateProducts(retValue);
                     } else {
                         // LA RICERCA HA PRODOTTO DEI RISULTATI
                         if (header.getBoolean("firstRequest") && !header.getBoolean("findMore")) {// Significa che ho fatto una nuova ricerca quindi serve una lista pulita
@@ -423,6 +520,8 @@ public class NetworkViewModel extends AndroidViewModel {
                         Collections.reverse(searchResults.getArrayList());
                         adapterSearch.setData(searchResults.getArrayList());
 
+                        searchResults.setSavedSearch(false);
+
                         int itemsNums = header.getInt("itemsNum");
                         String analyzedItems = "";
                         if (itemsNums > 1)
@@ -444,19 +543,22 @@ public class NetworkViewModel extends AndroidViewModel {
                         if (header.getBoolean("stillElementsToAnalyze")) {
                             retValue.put("progressBar", true);
 
+                            searchedProduductsLiveData.updateProducts(retValue);
+
                             sendRequest(header.getInt("fastRetrasmitPosition"), header.getString("linkRemainingProducts"));
                         } else {
                             linkNextPage = header.getString("linkNextPage");
 
                             retValue.put("progressBar", false);
-                        }
 
-                        productsLiveData.updateProducts(retValue);
+                            searchedProduductsLiveData.updateProducts(retValue);
+                        }
                     }
                 } else {
                     retValue.put("error", true);
                     retValue.put("errorDescription", "Unfortunately we were unable to fulfill your request ...");
-                    productsLiveData.updateProducts(retValue);
+                    Log.d("result", String.valueOf(result));
+                    searchedProduductsLiveData.updateProducts(retValue);
                 }
             } catch (JSONException e) {
                 e.printStackTrace();

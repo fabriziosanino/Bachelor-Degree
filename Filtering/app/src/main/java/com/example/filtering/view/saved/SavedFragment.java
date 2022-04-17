@@ -46,14 +46,35 @@ public class SavedFragment extends Fragment {
         networkViewModel.setAdapterSaved(adapter);
 
         networkViewModel.getReadResearchLiveData().observe(getViewLifecycleOwner(), result -> {
-            try {
-                networkViewModel.getProgressDialog().hide();
+            if(result != null) {
+                try {
+                    networkViewModel.getProgressDialog().hide();
 
-                if(result.getBoolean("error")) {
-                    openAlertDialog(result.getString("errorDescription"));
+                    if (result.getBoolean("error")) {
+                        openAlertDialog(result.getString("errorDescription"));
+                    }
+                } catch (JSONException e) {
+                    e.printStackTrace();
                 }
-            } catch (JSONException e) {
-                e.printStackTrace();
+
+                networkViewModel.getReadResearchLiveData().setValue(null);
+            }
+        });
+
+        networkViewModel.getDeleteResearchLiveData().observe(getViewLifecycleOwner(), result -> {
+            if(result != null) {
+                try {
+                    if (result.getJSONObject(0).getBoolean("error")) {
+                        openAlertDialog(result.getJSONObject(0).getString("errorDescription"));
+                    } else {
+                        networkViewModel.getProgressDialog().hide();
+                        openAlertDialog("Search successfully deleted!");
+                    }
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+
+                networkViewModel.getDeleteResearchLiveData().setValue(null);
             }
         });
 

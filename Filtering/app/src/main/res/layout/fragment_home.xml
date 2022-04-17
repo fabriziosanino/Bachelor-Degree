@@ -88,6 +88,19 @@
         app:layout_constraintTop_toBottomOf="@+id/lstItemsSearched"
         app:layout_constraintVertical_bias="1.0" />
 
+    <Button
+        android:id="@+id/btnNewResearch"
+        android:layout_width="401dp"
+        android:layout_height="47dp"
+        android:text="New search"
+        android:textSize="13sp"
+        android:visibility="invisible"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/lstItemsSearched"
+        app:layout_constraintVertical_bias="1.0" />
+
     <ImageView
         android:id="@+id/infoName"
         android:layout_width="35dp"

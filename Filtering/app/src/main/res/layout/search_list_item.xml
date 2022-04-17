@@ -93,9 +93,9 @@
 
         <Button
             android:id="@+id/btnClassify"
-            android:layout_width="132dp"
-            android:layout_height="37dp"
-            android:text="CLASSIFY"
+            android:layout_width="159dp"
+            android:layout_height="36dp"
+            android:text="REVIEW RATING"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toStartOf="@+id/ok"
             app:layout_constraintHorizontal_bias="0.169"

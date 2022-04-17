@@ -1,10 +1,19 @@
 package com.example.filtering;
 
+import android.app.AlertDialog;
+import android.content.DialogInterface;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
+import android.view.View;
+import android.widget.Button;
+import android.widget.EditText;
+import android.widget.ImageView;
+import android.widget.TextView;
 
+import com.example.filtering.databinding.FragmentHomeBinding;
 import com.example.filtering.viewModel.NetworkViewModel;
 import com.google.android.material.navigation.NavigationView;
 
@@ -16,15 +25,20 @@ import androidx.navigation.ui.AppBarConfiguration;
 import androidx.navigation.ui.NavigationUI;
 import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.filtering.databinding.ActivityMainBinding;
+import com.google.android.material.snackbar.Snackbar;
+
+import org.json.JSONException;
+import org.json.JSONObject;
 
 public class MainActivity extends AppCompatActivity {
 
     private AppBarConfiguration mAppBarConfiguration;
     private ActivityMainBinding binding;
 
-    private NetworkViewModel model;
+    private NetworkViewModel networkViewModel;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -39,18 +53,18 @@ public class MainActivity extends AppCompatActivity {
         // Passing each menu ID as a set of Ids because each
         // menu should be considered as top level destinations.
         mAppBarConfiguration = new AppBarConfiguration.Builder(
-                R.id.nav_home, R.id.nav_saved, R.id.nav_slideshow)
+                R.id.nav_home, R.id.nav_saved, R.id.nav_last_search)
                 .setOpenableLayout(drawer)
                 .build();
         NavController navController = Navigation.findNavController(this, R.id.nav_host_fragment_content_main);
         NavigationUI.setupActionBarWithNavController(this, navController, mAppBarConfiguration);
         NavigationUI.setupWithNavController(navigationView, navController);
 
-        model = new ViewModelProvider(this).get(NetworkViewModel.class);
+        networkViewModel = new ViewModelProvider(this).get(NetworkViewModel.class);
 
         /* Imposto il puntatore della progressBar nel networkViewModel in modo che sia accessibile da
-        *  tutti i fragment */
-        model.setProgressBar(binding.appBarMain.progressBarToolbar);
+         *  tutti i fragment */
+        networkViewModel.setProgressBar(binding.appBarMain.progressBarToolbar);
     }
 
     @Override
@@ -72,22 +86,22 @@ public class MainActivity extends AppCompatActivity {
     public boolean onOptionsItemSelected(@NonNull MenuItem item) {
         switch (item.getItemId()) {
             case R.id.iPri:
-                model.setIncreasingPrice();
+                networkViewModel.setIncreasingPrice();
                 return true;
             case R.id.dPri:
-                model.setDecreasingPrice();
+                networkViewModel.setDecreasingPrice();
                 return true;
             case R.id.iRel:
-                model.setIncreasingReliability();
+                networkViewModel.setIncreasingReliability();
                 return true;
             case R.id.dRel:
-                model.setDecreasingReliability();
+                networkViewModel.setDecreasingReliability();
                 return true;
             case R.id.iRat:
-                model.setIncreasingReviewRating();
+                networkViewModel.setIncreasingReviewRating();
                 return true;
             case R.id.dRat:
-                model.setDecreasingReviewRating();
+                networkViewModel.setDecreasingReviewRating();
                 return true;
             default:
                 return super.onOptionsItemSelected(item);

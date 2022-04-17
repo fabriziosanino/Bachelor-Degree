@@ -5,38 +5,36 @@ import android.app.AlertDialog;
 import android.app.ProgressDialog;
 import android.content.DialogInterface;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.inputmethod.InputMethodManager;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
-import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
-import com.example.filtering.model.SearchResult;
+import com.example.filtering.R;
 import com.example.filtering.databinding.FragmentHomeBinding;
 import com.example.filtering.view.home.searchAdapter.SearchItemsCustomViewAdapter;
 import com.example.filtering.viewModel.NetworkViewModel;
 import com.google.android.material.snackbar.Snackbar;
 
-import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
-import java.util.Collections;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class HomeFragment extends Fragment {
 
     private FragmentHomeBinding binding;
     NetworkViewModel networkViewModel;
     SearchItemsCustomViewAdapter adapter;
-
-    ArrayList<SearchResult> searchResults;
 
     public View onCreateView(@NonNull LayoutInflater inflater,
                              ViewGroup container, Bundle savedInstanceState) {
@@ -54,98 +52,135 @@ public class HomeFragment extends Fragment {
         networkViewModel.setProgressDialog(new ProgressDialog(getContext()));
         networkViewModel.setAdapterResearch(adapter);
 
+        JSONObject jsonRet = networkViewModel.setCurrentProducts();
+        try {
+            if (!jsonRet.getBoolean("error")) {
+                if (jsonRet.getBoolean("saved")) {
+                    changeVisibility(true);
+                    binding.btnNewResearch.setVisibility(View.VISIBLE);
+                } else {
+                    changeVisibility(false);
+                    binding.btnNewResearch.setVisibility(View.INVISIBLE);
+                }
+            }
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+
         networkViewModel.getSaveResearchLiveData().observe(getViewLifecycleOwner(), result -> {
-            try {
-                networkViewModel.getProgressDialog().hide();
+            if(result != null) {
+                try {
+                    JSONObject res = result.getJSONObject(0);
 
-                JSONObject res = result.getJSONObject(0);
+                    networkViewModel.getProgressDialog().hide();
 
-                if(res.getBoolean("error"))
-                    openAlertDialog(res.getString("errorDescription"));
-                else
-                    openAlertDialog("Search saved successfully!");
-            } catch (JSONException e) {
-                e.printStackTrace();
+                    if (res.getBoolean("error"))
+                        openAlertDialog(res.getString("errorDescription"));
+                    else
+                        openAlertDialog("Search saved successfully!");
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+
+                networkViewModel.getSaveResearchLiveData().setValue(null);
             }
         });
 
         networkViewModel.getClassifyLiveData().observe(getViewLifecycleOwner(), result -> {
-            try {
-                networkViewModel.getProgressDialog().hide();
+            if(result != null) {
+                try {
+                    networkViewModel.getProgressDialog().hide();
 
-                JSONObject res = result.getJSONObject(0);
+                    JSONObject res = result.getJSONObject(0);
 
-                if(res.getBoolean("error"))
-                    openAlertDialog(res.getString("errorDescription"));
-                else {
-                    float positive = res.getInt("positive");
-                    float negative = res.getInt("negative");
-                    float neutral = res.getInt("neutral");
+                    if (res.getBoolean("error"))
+                        openAlertDialog(res.getString("errorDescription"));
+                    else {
+                        float positive = res.getInt("positive");
+                        float negative = res.getInt("negative");
+                        float neutral = res.getInt("neutral");
 
-                    float tot = positive + negative + neutral;
+                        float tot = positive + negative + neutral;
 
-                    if(positive != 0)
-                        positive = (positive/tot) * 100;
+                        if (positive != 0)
+                            positive = (positive / tot) * 100;
 
-                    if(negative != 0)
-                        negative = (negative/tot) * 100;
+                        if (negative != 0)
+                            negative = (negative / tot) * 100;
 
-                    if(neutral != 0)
-                        neutral = (neutral/tot) * 100;
+                        if (neutral != 0)
+                            neutral = (neutral / tot) * 100;
 
-                    openAlertDialog("Positive: " + positive + "%\nNegative: " + negative + "%\nNeutral: " + neutral + "%");
+                        openAlertDialog("Positive: " + positive + "%\nNegative: " + negative + "%\nNeutral: " + neutral + "%");
+                    }
+                } catch (JSONException e) {
+                    e.printStackTrace();
                 }
-            } catch (JSONException e) {
-                e.printStackTrace();
+
+                networkViewModel.getClassifyLiveData().setValue(null);
             }
         });
 
         networkViewModel.getResearchDetailsLiveData().observe(getViewLifecycleOwner(), result -> {
-            networkViewModel.getProgressDialog().hide();
+            if(result != null) {
+                networkViewModel.getProgressDialog().hide();
 
-            try {
-                if (result.getBoolean("error")) {
-                    openAlertDialog(result.getString("errorDescription"));
-                } else {
-                    changeVisibility(false);
+                try {
+                    if (result.getBoolean("error")) {
+                        openAlertDialog(result.getString("errorDescription"));
+                    } else {
+                        changeVisibility(false);
 
-                    binding.btnSave.setVisibility(View.INVISIBLE);
-                    binding.btnBack.setVisibility(View.INVISIBLE);
+                        binding.lstItemsSearched.scrollToPosition(0);
+                        //lstItemsSearched.setVisibility(View.VISIBLE);
+
+                        binding.btnSave.setVisibility(View.INVISIBLE);
+                        binding.btnBack.setVisibility(View.INVISIBLE);
+                        binding.btnFindMore.setVisibility(View.INVISIBLE);
+                        binding.btnNewResearch.setVisibility(View.VISIBLE);
+                    }
+                } catch (JSONException e) {
+                    e.printStackTrace();
                 }
-            } catch (JSONException e) {
-                e.printStackTrace();
+
+                networkViewModel.getResearchDetailsLiveData().setValue(null);
             }
         });
 
-        networkViewModel.getProductsLiveData().observe(getViewLifecycleOwner(), result -> {
-            try {
-                if (result.getBoolean("error")) {
-                    // LA RICERCA NON HA PRODOTTO ALCUN RISULTATO
-                    changeVisibility(true);
-                    openAlertDialog(result.getString("errorDescription"));
+        networkViewModel.getSearchedProductsLiveData().observe(getViewLifecycleOwner(), result -> {
+            if(result != null) {
+                try {
+                    if (result.getBoolean("error")) {
+                        // LA RICERCA NON HA PRODOTTO ALCUN RISULTATO
+                        changeVisibility(true);
+                        openAlertDialog(result.getString("errorDescription"));
 
-                    binding.btnSave.setVisibility(View.INVISIBLE);
+                        binding.btnSave.setVisibility(View.INVISIBLE);
 
-                    networkViewModel.getProgressDialog().hide();
-                    networkViewModel.getProgressBar().setVisibility(View.INVISIBLE);
-                } else {
-                    // LA RICERCA HA PRODOTTO DEI RISULTATI
-                    String analyzedItems = result.getString("analyzed");
-                    String foundItems = result.getString("found");
-
-                    Snackbar.make(getView(), analyzedItems + foundItems, Snackbar.LENGTH_LONG)
-                            .setAction("Action", null).show();
-
-                    if(result.getBoolean("progressBar")) {
-                        networkViewModel.getProgressBar().setVisibility(View.VISIBLE);
-                        networkViewModel.getProgressDialog().hide();
-                    } else {
                         networkViewModel.getProgressDialog().hide();
                         networkViewModel.getProgressBar().setVisibility(View.INVISIBLE);
+                    } else {
+                        // LA RICERCA HA PRODOTTO DEI RISULTATI
+
+                        String analyzedItems = result.getString("analyzed");
+                        String foundItems = result.getString("found");
+
+                        Snackbar.make(getView(), analyzedItems + foundItems, Snackbar.LENGTH_LONG)
+                                .setAction("Action", null).show();
+
+                        if (result.getBoolean("progressBar")) {
+                            networkViewModel.getProgressBar().setVisibility(View.VISIBLE);
+                            networkViewModel.getProgressDialog().hide();
+                        } else {
+                            networkViewModel.getProgressDialog().hide();
+                            networkViewModel.getProgressBar().setVisibility(View.INVISIBLE);
+                        }
                     }
+                } catch (JSONException e) {
+                    e.printStackTrace();
                 }
-            } catch (JSONException e) {
-                e.printStackTrace();
+
+                networkViewModel.getSearchedProductsLiveData().setValue(null);
             }
         });
 
@@ -167,7 +202,7 @@ public class HomeFragment extends Fragment {
                 networkViewModel.setProgressDialogMessage("Product search in progress. Wait for...");
                 networkViewModel.getProgressDialog().show();
                 try {
-                    sendRequest(productName, true, false,  false);
+                    sendRequest(productName, true, false, false);
                 } catch (JSONException e) {
                     e.printStackTrace();
                     networkViewModel.getProgressDialog().dismiss();
@@ -179,13 +214,20 @@ public class HomeFragment extends Fragment {
             }
         });
 
-        binding.btnBack.setOnClickListener(view -> {
-            networkViewModel.getProgressBar().setVisibility(View.INVISIBLE);
+        binding.btnNewResearch.setOnClickListener(view -> {
             changeVisibility(true);
         });
 
-        binding.infoName.setOnClickListener(view -> openAlertDialog("Insert the article to be searched by putting, divided by a comma, the characteristics that the product must have. " +
-                "If possible, insert the units of measurement with space (e.g. 16 cm). For example if you need to search for an ASUS NOTEBOOK with 16 GB of RAM write 'ASUS NOTEBOOK, 16 GB RAM'"));
+        binding.btnBack.setOnClickListener(view -> {
+            networkViewModel.getProgressBar().setVisibility(View.INVISIBLE);
+            binding.inputName.setText(networkViewModel.getProductName());
+            changeVisibility(true);
+        });
+
+        binding.infoName.setOnClickListener(view ->
+
+                openAlertDialog("Insert the article to be searched by putting, divided by a comma, the characteristics that the product must have. " +
+                        "If possible, insert the units of measurement with space (e.g. 16 cm). For example if you need to search for an ASUS NOTEBOOK with 16 GB of RAM write 'ASUS NOTEBOOK, 16 GB RAM'"));
 
         /*binding.infoCharacteristics.setOnClickListener(view -> {
             openAlertDialog("In questo campo inserire le caratteristiche del prodotto. Non devono essere inserite frasi ma solo specifiche. Ad esempio se è necessario cercare un PC " +
@@ -203,42 +245,9 @@ public class HomeFragment extends Fragment {
         });
 
         binding.btnSave.setOnClickListener(view -> {
-            if(searchResults.size() != 0) {
-                JSONObject research = new JSONObject();
-                try {
-                    research.put("nameResearch", binding.inputName.getText());
-                } catch (JSONException e) {
-                    e.printStackTrace();
-                }
-
-                JSONArray jsonArray = new JSONArray();
-
-                for(SearchResult s: searchResults) {
-                    JSONObject jsonObject = new JSONObject();
-                    try {
-                        jsonObject.put("productName", s.getProductName());
-                        jsonObject.put("productLink", s.getProductLink());
-                        jsonObject.put("productImg", s.getProductImg());
-                        jsonObject.put("reliability", s.getReliability());
-                        jsonObject.put("price", s.getPrice());
-
-                        jsonArray.put(jsonObject);
-                    } catch (JSONException e) {
-                        e.printStackTrace();
-                    }
-                }
-
-                try {
-                    research.put("products", jsonArray);
-                } catch (JSONException e) {
-                    e.printStackTrace();
-                }
-
-                networkViewModel.setProgressDialogMessage("Saving the search in progress. Wait for...");
-                networkViewModel.getProgressDialog().show();
-                networkViewModel.saveResearch(research);
-            } else
-                openAlertDialog("Impossible to save. No products found!");
+            networkViewModel.setProgressDialogMessage("Saving the search in progress. Wait for...");
+            networkViewModel.getProgressDialog().show();
+            networkViewModel.saveResearch();
         });
 
         return root;
@@ -267,6 +276,12 @@ public class HomeFragment extends Fragment {
         networkViewModel.serachProducts(jsonObject, productName, firstTimeFindMore);
     }
 
+    @Override
+    public void onCreate(@Nullable Bundle savedInstanceState) {
+
+        super.onCreate(savedInstanceState);
+    }
+
     private void changeVisibility(boolean visibility) {
         if (visibility) {
             binding.btnFilter.setVisibility(View.VISIBLE);
@@ -281,6 +296,7 @@ public class HomeFragment extends Fragment {
             binding.btnBack.setVisibility(View.INVISIBLE);
             binding.btnSave.setVisibility(View.INVISIBLE);
             binding.btnFindMore.setVisibility(View.INVISIBLE);
+            binding.btnNewResearch.setVisibility(View.INVISIBLE);
         } else {
             binding.btnFilter.setVisibility(View.INVISIBLE);
             //binding.inputCharacteristics.setVisibility(View.INVISIBLE);

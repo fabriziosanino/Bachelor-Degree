@@ -22,8 +22,8 @@
     </fragment>
 
     <fragment
-        android:id="@+id/nav_slideshow"
-        android:name="com.example.filtering.view.slideshow.SlideshowFragment"
-        android:label="@string/menu_slideshow"
-        tools:layout="@layout/fragment_slideshow" />
+        android:id="@+id/nav_last_search"
+        android:name="com.example.filtering.view.search.SearchFragment"
+        android:label="Last Search"
+        tools:layout="@layout/fragment_saved" />
 </navigation>

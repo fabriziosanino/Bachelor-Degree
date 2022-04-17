@@ -49,6 +49,7 @@ public class SavedItemsCustomViewAdapter extends RecyclerView.Adapter<SavedItems
     @Override
     public ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
         View view = mIflater.inflate(R.layout.saved_list_item, parent, false);
+
         return new ViewHolder(view);
     }
 
@@ -77,9 +78,6 @@ public class SavedItemsCustomViewAdapter extends RecyclerView.Adapter<SavedItems
             }
 
             holder.btnShow.setOnClickListener(view -> {
-                networkViewModel.setProgressDialogMessage("Search download in progress. Wait for...");
-                networkViewModel.getProgressDialog().show();
-
                 JSONObject jsonObject = new JSONObject();
                 try {
                     jsonObject.put("idResearch", item.getId());
@@ -94,20 +92,6 @@ public class SavedItemsCustomViewAdapter extends RecyclerView.Adapter<SavedItems
 
                 NavHostFragment.findNavController(fragmentPointer)
                         .navigate(R.id.action_nav_saved_to_nav_home);
-            });
-
-            networkViewModel.getDeleteResearchLiveData().observe(fragmentPointer.getViewLifecycleOwner(), result -> {
-                try {
-                    if (result.getJSONObject(0).getBoolean("error")) {
-                        openAlertDialog(result.getJSONObject(0).getString("errorDescription"));
-                    } else {
-                        networkViewModel.getProgressDialog().hide();
-                        openAlertDialog("Search successfully deleted!");
-                        mData.remove(position);
-                    }
-                } catch(JSONException e) {
-                    e.printStackTrace();
-                }
             });
 
             holder.btnDelete.setOnClickListener(view -> {
