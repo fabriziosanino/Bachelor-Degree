@@ -1,15 +1,10 @@
 from selenium import webdriver
 from selenium.webdriver.common.by import By
-from selenium.webdriver.support.ui import WebDriverWait as wait
-from selenium.webdriver.support import expected_conditions as EC
-from selenium.webdriver.chrome.service import Service
-from selenium.webdriver.common.keys import Keys
 
 import reviewClassifierBayes
 import amazonModule
 
 import mysql.connector
-from mysql.connector import Error
 
 from flask import Flask
 from flask import request

@@ -3,9 +3,10 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support.ui import WebDriverWait as wait
 
-import scrapingModuleAbstract
+import scrapingModuleInterface
 
-class AmazonModule(scrapingModuleAbstract.AbstractModule):
+
+class AmazonModule(scrapingModuleInterface.AbstractModule):
     """Apre la schermata principale e naviga sul prodotto passato come parametro
 
     Parametri
@@ -18,6 +19,7 @@ class AmazonModule(scrapingModuleAbstract.AbstractModule):
     Returns
     -------
     """
+
     def navigateToProducts(self, driver, productName):
         linkAmazon = 'https://www.amazon.com'
         driver.get(linkAmazon)
@@ -28,7 +30,6 @@ class AmazonModule(scrapingModuleAbstract.AbstractModule):
         search.send_keys(Keys.ENTER)
 
         driver.implicitly_wait(0.5)
-
 
     """Raccoglie in una lista tutti i prodotti che sono presenti nella pagina
     
@@ -42,12 +43,12 @@ class AmazonModule(scrapingModuleAbstract.AbstractModule):
     list
         Lista di prodotti
     """
+
     def getProducts(self, driver):
         items = wait(driver, 10).until(
             EC.presence_of_all_elements_located((By.XPATH, '//div[contains(@data-component-type, "s-search-result")]')))
 
         return items
-
 
     """Ottiene il link della prossima pagina di prodotti
     
@@ -61,6 +62,7 @@ class AmazonModule(scrapingModuleAbstract.AbstractModule):
     string
         Link della prossima pagina
     """
+
     def getLinkNextPage(self, driver):
         linkNextPage = wait(driver, 10).until(
             EC.presence_of_all_elements_located((By.XPATH,
@@ -68,7 +70,6 @@ class AmazonModule(scrapingModuleAbstract.AbstractModule):
         linkNextPage = linkNextPage[0].get_attribute("href")
 
         return linkNextPage
-
 
     """Ottiene il nome del prodotto. Quello contenuto nella descrizione principale
     
@@ -82,6 +83,7 @@ class AmazonModule(scrapingModuleAbstract.AbstractModule):
     string
         Nome del prodotto
     """
+
     def getProductName(self, item):
         productName = ""
         try:
@@ -91,7 +93,6 @@ class AmazonModule(scrapingModuleAbstract.AbstractModule):
             productName = item.find_element(By.XPATH, './/span[@class="a-size-medium a-color-base a-text-normal"]')
 
         return productName
-
 
     """Ottiene il prezzo del prodotto
     
@@ -105,6 +106,7 @@ class AmazonModule(scrapingModuleAbstract.AbstractModule):
     string
         Prezzo del prodotto
     """
+
     def getProductPrice(self, item):
         try:
             productPrice = item.find_element(By.XPATH, './/span[@class="a-offscreen"]').get_attribute("innerHTML")
@@ -112,7 +114,6 @@ class AmazonModule(scrapingModuleAbstract.AbstractModule):
             productPrice = ""
 
         return productPrice
-
 
     """Ottiene il link alla pagina del prodotto
     
@@ -126,12 +127,12 @@ class AmazonModule(scrapingModuleAbstract.AbstractModule):
     string
         Link del prodotto
     """
+
     def getLinkProduct(self, item):
         linkProduct = item.find_element(By.XPATH,
                                         './/a[@class="a-link-normal s-underline-text s-underline-link-text s-link-style a-text-normal"]')
 
         return linkProduct
-
 
     """Ottiene il rating del prodotto definito da Amazon
     
@@ -145,18 +146,18 @@ class AmazonModule(scrapingModuleAbstract.AbstractModule):
     string
         Rating del prosotto
     """
+
     def getProductReviewRating(self, item):
         try:
             rating = item.find_element(By.XPATH,
-                                            './/span[@class="a-icon-alt"]').get_attribute("innerHTML")
+                                       './/span[@class="a-icon-alt"]').get_attribute("innerHTML")
 
             rating = rating.split(' out')[0]
         except:
-            #Alcuni prodotti non hanno alcuna recensione
+            # Alcuni prodotti non hanno alcuna recensione
             rating = 0
 
         return rating
-
 
     """Ottiene il link all'immagine del prodotto
     
@@ -170,11 +171,11 @@ class AmazonModule(scrapingModuleAbstract.AbstractModule):
     string
         Link all'immagine
     """
+
     def getLinkProductImg(self, item):
         imageProduct = item.find_element(By.XPATH, './/img[@class="s-image"]')
 
         return imageProduct
-
 
     """Ottiene tutti i dettagli del prodotto contenuti nella pagina di esso
     
@@ -192,6 +193,7 @@ class AmazonModule(scrapingModuleAbstract.AbstractModule):
     string
         Concatenazione di tutti i dettagli
     """
+
     def getProductDetails(self, driver, linkProduct, textToSearch):
         # Utilizzo l'instanza di google chrome per cercare il prodotto
         driver.get(linkProduct.get_attribute("href"))
@@ -227,7 +229,6 @@ class AmazonModule(scrapingModuleAbstract.AbstractModule):
 
         return textToSearch
 
-
     """Ottiene il link all'immagine del prodotto
     
     Parametri
@@ -240,6 +241,7 @@ class AmazonModule(scrapingModuleAbstract.AbstractModule):
     string, Optional
         Errore se non ri riescono a trovare le recensioni altrimenti None
     """
+
     def showAllReview(self, driver):
         # Mostro tutte le recensioni
         try:
@@ -253,7 +255,6 @@ class AmazonModule(scrapingModuleAbstract.AbstractModule):
                 "errorDescription": "Nessuna recensione trovata"
             }]
 
-
     """Ordina le recensioni
     
     Parametri
@@ -264,13 +265,13 @@ class AmazonModule(scrapingModuleAbstract.AbstractModule):
     Returns
     -------
     """
+
     def orderReview(self, driver):
         # Ordino le recensione in base a quelle più recenti
         select = wait(driver, 20).until(
             EC.element_to_be_clickable((By.XPATH, '//select[@id="sort-order-dropdown"]/option[@value="recent"]')))
 
         select.click()
-
 
     """Ottiene il container principale che contiene tutte le recensioni cosiì da velocizzare le operazioni future
     
@@ -284,11 +285,12 @@ class AmazonModule(scrapingModuleAbstract.AbstractModule):
     seleniumElement
         Contenitore principale
     """
+
     def readMainContainer(self, driver):
-        container = wait(driver, 30).until(EC.visibility_of_element_located((By.XPATH, '//div[@class="a-fixed-right-grid view-point"]')))
+        container = wait(driver, 30).until(
+            EC.visibility_of_element_located((By.XPATH, '//div[@class="a-fixed-right-grid view-point"]')))
 
         return container
-
 
     """Ottiene tutte le recensioni presenti nel contenitore principale
     
@@ -302,11 +304,11 @@ class AmazonModule(scrapingModuleAbstract.AbstractModule):
     list
         Lista di recensioni
     """
+
     def readReviews(self, page):
         reviews = page.find_elements(By.XPATH, './/div[@data-hook="review"]')
 
         return reviews
-
 
     """Ottiene il testo contenuto in una recensione
     
@@ -320,6 +322,7 @@ class AmazonModule(scrapingModuleAbstract.AbstractModule):
     string
         Testo della recensione
     """
+
     def getReviewText(self, review):
         try:
             text = review.find_element(By.XPATH, './/a[@data-hook="review-title"]/span').get_attribute(
@@ -337,7 +340,6 @@ class AmazonModule(scrapingModuleAbstract.AbstractModule):
 
         return text
 
-
     """Apre la prossima pagina che contiene le recensioni
     
     Parametri
@@ -350,6 +352,7 @@ class AmazonModule(scrapingModuleAbstract.AbstractModule):
     boolean
         Se è stata trovata la pagina ritorna True altriemnti False
     """
+
     def getNextReviewPage(self, page):
         try:
             buttonNext = wait(page, 20).until(EC.element_to_be_clickable((By.XPATH, '//li[@class="a-last"]/a')))
@@ -364,17 +367,13 @@ class AmazonModule(scrapingModuleAbstract.AbstractModule):
         return result
 
 
-
 """
     Aggiunge alla string passata come parametro, il contenuto di tutti i tag presenti nella lista itemsFind
     """
+
+
 def appendTextDetails(itemsFind, text):
     for item in itemsFind:
         text += "-" + item.text
 
     return text
-
-
-
-
-
