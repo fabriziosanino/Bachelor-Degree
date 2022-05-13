@@ -9,5 +9,5 @@ Per eseguire il Server Python (/Scraping)
 Per eseguire l'applicazione Java (/Filtering)
 
 ```
-Aprirla con Androi Studio ed eseguirla con il tasto 'Play'
+Aprirla con Android Studio ed eseguirla con il tasto 'Play'
 ```
