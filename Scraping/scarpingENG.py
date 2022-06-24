@@ -15,6 +15,8 @@ from concurrent.futures import ThreadPoolExecutor
 from itertools import permutations
 from itertools import combinations
 
+import os
+
 import json
 
 app = Flask(__name__)
@@ -24,7 +26,7 @@ drivers = []
 
 AmazonModule = amazonModule.AmazonModule()
 
-s = 'C:/Users/fabri/Desktop/Fabry/3 Uni/2 Semestre/Stage/Scraping/chromedriver.exe'
+s = 'C:\\Users\\fabri\\Desktop\\Fabry\\3 Uni\\2 Semestre\\Stage\\GitHub\\Scraping\\chromedriver.exe'
 options = webdriver.ChromeOptions()
 options.add_argument('--headless')
 
