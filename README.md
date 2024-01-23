@@ -1,6 +1,6 @@
 # Bachelor-Degree
 
-This repository contains a library of Java and Python which helped me to get my Beachelor Degree in 2022 at Università di Torino
+This repository contains a library of Java and Python which helped me to get my Beachelor Degree in 2022 at University of Turin
 
 # Goal
 
